@@ -8,7 +8,7 @@ from okexapi.FutureAPI import Future
 
 log_filename = 'trade.log'
 logging.basicConfig(
-#	filename = './log/' + log_filename + str(time.strftime('%m-%d %H:%M:%S')),
+	filename = './log/' + log_filename + str(time.strftime('%m-%d %H:%M:%S')),
         level = logging.INFO,
         format = '[%(asctime)s] %(levelname)s [%(funcName)s: %(filename)s, %(lineno)d] %(message)s',
         datefmt = '%Y-%m-%d %H:%M:%S',
@@ -16,12 +16,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger('tradebot')
 
-f = open('config.json', encoding = 'utf-8')
+f = open('/root/okex/okex/strategy/grid/config.json', encoding = 'utf-8')
 config = json.load(f)
 
 #初始化apikey，secretkey,url
-apikey = config['api_key'] 
-secretkey = config['secret_key'] 
+apikey = config['api_key']
+secretkey = config['secret_key']
 okcoinRESTURL = config['url']
 
 
@@ -95,14 +95,14 @@ class Grid:
             ret = self.future.open_short(self.coin, self.contract_type, short_price, self.amount, self.leverage, bbo = 0)
             self.open_shorts.append(ret)
 
-            self.logger.info('init: long_order_at: ' + str(long_price) + 'short_order_at: ' + str(short_price))
+            self.logger.info('init: long_order_at: ' + str(round(long_price, 3)) + ', short_order_at: ' + str(round(short_price, 3)))
             time.sleep(1)
 
 
     def adjust_open_orders(self, last, atr):
         # check order status
         for order in self.open_longs:
-            order_info = self.future.future_orderinfo(self.coin, self.contract_type, order, 2, 1, 50)['orders'][0]
+            order_info = self.future.future_orderinfo(self.coin, self.contract_type, order, 2, 1, 50)[0]
             status = order_info['status']
             order_price = order_info['price']
             low_limit = last - (self.grid_size + 2) * self.times_atr * atr
@@ -113,11 +113,9 @@ class Grid:
                 price = last  - (idx + 1) * self.times_atr * atr
                 ret = self.future.open_long(self.coin, self.contract_type, price, self.amount, self.leverage, bbo = 0)
                 self.open_longs[idx] = ret
-        
+
         for order in self.open_shorts:
-            ret = self.future.future_orderinfo(self.coin, self.contract_type, order, 2, 1, 50)
-            print(ret)
-            order_info = self.future.future_orderinfo(self.coin, self.contract_type, order, 2, 1, 50)['orders'][0]
+            order_info = self.future.future_orderinfo(self.coin, self.contract_type, order, 2, 1, 50)[0]
             status = order_info['status']
             order_price = order_info['price']
             up_limit = last + (self.grid_size + 2) * self.times_atr * atr
@@ -128,11 +126,11 @@ class Grid:
                 price = last  + (idx + 1) * self.times_atr * atr
                 ret = self.future.open_short(self.coin, self.contract_type, price, self.amount, self.leverage, bbo = 0)
                 self.open_shorts[idx] = ret
-        
+
     def adjust_close_orders(self, last, atr, long_amount, short_amount):
         to_del = []
         for order in self.close_longs:
-            order_info = self.future.future_orderinfo(self.coin, self.contract_type, order, 2, 1, 50)['orders'][0]
+            order_info = self.future.future_orderinfo(self.coin, self.contract_type, order, 2, 1, 50)[0]
             status = order_info['status']
             order_price = order_info['price']
             up_limit = last + (self.grid_size + 2) * self.times_atr * atr
@@ -159,7 +157,7 @@ class Grid:
 
         to_del.clear()
         for order in self.close_shorts:
-            order_info = self.future.future_orderinfo(self.coin, self.contract_type, order, 2, 1, 50)['orders'][0]
+            order_info = self.future.future_orderinfo(self.coin, self.contract_type, order, 2, 1, 50)[0]
             status = order_info['status']
             order_price = order_info['price']
             up_limit = last - (self.grid_size + 2) * self.times_atr * atr
@@ -185,27 +183,29 @@ class Grid:
             i += 1
 
     def run_forever(self):
-        # get last, atr
-        last, atr = self.get_last_atr()
+        while True:
+            # get last, atr
+            last, atr = self.get_last_atr()
 
-        # get position
-        long_amount, long_profit, short_amount, short_profit = self.get_position()
-        self.logger.info('position: long_amount = %s, long_profit = %s, short_amount = %s, short_profit = %s' % (long_amount, long_profit, short_amount, short_profit))
+            # get position
+            long_amount, long_profit, short_amount, short_profit = self.get_position()
+            self.logger.info('position: long_amount = %s, long_profit = %s, short_amount = %s, short_profit = %s' % (long_amount, long_profit, short_amount, short_profit))
 
-        # get available coin amount
-        coin_available = self.get_available()
-        self.logger.info('coin_available = ' + str(coin_available))
+            # get available coin amount
+            coin_available = self.get_available()
+            self.logger.info('coin_available = ' + str(coin_available))
+            self.logger.info('last = ' + str(last))
 
-        # init orders
-        if self.init:
-            self.init_orders(last, atr)
-            self.init = False
+            # init orders
+            if self.init:
+                self.init_orders(last, atr)
+                self.init = False
 
-        # adjust orders
-        self.adjust_open_orders(last, atr)
-        self.adjust_close_orders(last, atr, long_amount, short_amount)
+            # adjust orders
+            self.adjust_open_orders(last, atr)
+            self.adjust_close_orders(last, atr, long_amount, short_amount)
 
-        time.sleep(15)
+            time.sleep(15)
 
 
 bot = Grid(apikey, secretkey, okcoinRESTURL, coin, contract_type, kline_size, kline_num, bbo, leverage, amount, times_atr, grid_size, logger = logger)

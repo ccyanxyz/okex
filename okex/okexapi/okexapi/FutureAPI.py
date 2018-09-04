@@ -167,7 +167,12 @@ class Future:
                 'page_length':pageLength
                 }
         params['sign'] = buildMySign(params,self.__secretkey)
-        return httpPost(self.__url,FUTURE_ORDERINFO,params)
+        ret = httpPost(self.__url,FUTURE_ORDERINFO,params)
+        if ret['result'] == True:
+            return ret['orders']
+        else:
+            self.logger.info('get order info failed, error code: ' + str(ret['error_code']))
+            return list()
 
     #期货逐仓账户信息
     def future_userinfo_4fix(self):
