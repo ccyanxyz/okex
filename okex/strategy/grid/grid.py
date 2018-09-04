@@ -215,10 +215,10 @@ class Grid:
             #self.adjust_close_orders(last, atr, long_amount, short_amount)
 
             if long_amount > 0:
-                if long_profit > 0.1 or long_profit < -0.4:
+                if long_profit > 10 or long_profit < -40:
                     ret = self.future.close_long(self.coin, self.contract_type, last, long_amount, self.leverage, bbo = 1)
             if short_amount > 0:
-                if short_profit > 0.1 or long_profit < -0.4:
+                if short_profit > 10 or long_profit < -40:
                     ret = self.future.close_short(self.coin, self.contract_type, last, short_amount, self.leverage, bbo = 1)
 
 
