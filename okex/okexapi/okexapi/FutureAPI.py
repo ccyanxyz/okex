@@ -205,7 +205,7 @@ class Future:
         if ret['result'] == True:
             return ret['order_id']
         else:
-            self.logger.info('open long failed.')
+            self.logger.info('open long failed, error code: ' + str(ret['error_code']))
             return ''
    
     def close_long(self, coin, contract_type, price, amount, leverage, bbo = 1):
@@ -213,7 +213,7 @@ class Future:
         if ret['result'] == True:
             return ret['order_id']
         else:
-            self.logger.info('close long failed.')
+            self.logger.info('close long failed, error code: ' + str(ret['error_code']))
             return ''
    
     def open_short(self, coin, contract_type, price, amount, leverage, bbo = 1):
@@ -221,7 +221,7 @@ class Future:
         if ret['result'] == True:
             return ret['order_id']
         else:
-            self.logger.info('open short failed.')
+            self.logger.info('open short failed, error code: ' + str(ret['error_code']))
             return ''
 
     def close_short(self, coin, contract_type, price, amount, leverage, bbo = 1):
@@ -229,5 +229,5 @@ class Future:
         if ret['result'] == True:
             return ret['order_id']
         else:
-            self.logger.info('close short failed.')
+            self.logger.info('close short failed, error_code: ' + str(ret['error_code']))
             return ''
