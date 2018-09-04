@@ -8,7 +8,7 @@ from okexapi.FutureAPI import Future
 
 log_filename = 'trade.log'
 logging.basicConfig(
-	filename = './log/' + log_filename + str(time.strftime('%m-%d %H:%M:%S')),
+#	filename = './log/' + log_filename + str(time.strftime('%m-%d %H:%M:%S')),
         level = logging.INFO,
         format = '[%(asctime)s] %(levelname)s [%(funcName)s: %(filename)s, %(lineno)d] %(message)s',
         datefmt = '%Y-%m-%d %H:%M:%S',
@@ -98,7 +98,7 @@ class Grid:
             self.logger.info('init: long_order_at: ' + str(round(long_price, 3)) + ', short_order_at: ' + str(round(short_price, 3)))
             time.sleep(1)
 
-
+    '''
     def adjust_open_orders(self, last, atr):
         # check order status
         for order in self.open_longs:
@@ -181,8 +181,15 @@ class Grid:
                 self.close_shorts.append(ret)
                 short_amount = 0
             i += 1
+    '''
+    def clear_orders(self):
+        for order in self.open_longs:
+            self.future.future_cancel(self.coin, self.contract_type, order)
+        for order in self.open_shorts:
+            self.future.future_cancel(self.coin, self.contract_type, order)
 
     def run_forever(self):
+        counter = 1
         while True:
             # get last, atr
             last, atr = self.get_last_atr()
@@ -202,9 +209,22 @@ class Grid:
                 self.init = False
 
             # adjust orders
-            self.adjust_open_orders(last, atr)
-            self.adjust_close_orders(last, atr, long_amount, short_amount)
+            #self.adjust_open_orders(last, atr)
+            #self.adjust_close_orders(last, atr, long_amount, short_amount)
 
+            if long_amount > 0:
+                if long_profit > 0.1 or long_profit < -0.4:
+                    ret = self.future.close_long(self.coin, self.contract_type, last, long_amount, self.leverage, bbo = 1)
+            if short_amount > 0:
+                if short_profit > 0.1 or long_profit < -0.4:
+                    ret = self.future.close_short(self.coin, self.contract_type, last, short_amount, self.leverage, bbo = 1)
+            
+
+            if counter % 60 == 0:
+                self.clear_orders()
+                self.init_orders()
+
+            counter += 1
             time.sleep(15)
 
 
