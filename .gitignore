@@ -1,0 +1,11 @@
+__pycache__
+dist
+build
+.DS_Store
+log
+log/*
+*.log
+*.out
+
+
+config.json
