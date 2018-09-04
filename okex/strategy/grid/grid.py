@@ -39,9 +39,10 @@ leverage = config['leverage']
 amount = config['amount']
 times_atr = config['times_atr']
 grid_size = config['grid_size']
+clear_interval = config['clear_interval']
 
 class Grid:
-    def __init__(self, apikey, secretkey, okcoinRESTURL, coin, contract_type, kline_size, kline_num, bbo, leverage, amount, times_atr, grid_size, logger = None):
+    def __init__(self, apikey, secretkey, okcoinRESTURL, coin, contract_type, kline_size, kline_num, bbo, leverage, amount, times_atr, grid_size, clear_interval, logger = None):
         self.future = Future(okcoinRESTURL, apikey, secretkey, logger)
         self.coin = coin
         self.contract_type = contract_type
@@ -58,6 +59,7 @@ class Grid:
             self.logger = logging.getLogger('gridbot')
 
         self.init = True
+        self.clear_interval = clear_interval
 
         self.open_longs = []
         self.close_longs = []
@@ -218,9 +220,9 @@ class Grid:
             if short_amount > 0:
                 if short_profit > 0.1 or long_profit < -0.4:
                     ret = self.future.close_short(self.coin, self.contract_type, last, short_amount, self.leverage, bbo = 1)
-            
 
-            if counter % 60 == 0:
+
+            if counter % self.clear_interval == 0:
                 self.clear_orders()
                 self.init_orders()
 
@@ -228,6 +230,6 @@ class Grid:
             time.sleep(15)
 
 
-bot = Grid(apikey, secretkey, okcoinRESTURL, coin, contract_type, kline_size, kline_num, bbo, leverage, amount, times_atr, grid_size, logger = logger)
+bot = Grid(apikey, secretkey, okcoinRESTURL, coin, contract_type, kline_size, kline_num, bbo, leverage, amount, times_atr, grid_size, clear_interval, logger = logger)
 
 bot.run_forever()
