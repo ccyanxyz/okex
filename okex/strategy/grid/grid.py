@@ -96,6 +96,7 @@ class Grid:
             self.open_shorts.append(ret)
 
             self.logger.info('init: long_order_at: ' + str(long_price) + 'short_order_at: ' + str(short_price))
+            time.sleep(1)
 
 
     def adjust_open_orders(self, last, atr):
@@ -114,6 +115,8 @@ class Grid:
                 self.open_longs[idx] = ret
         
         for order in self.open_shorts:
+            ret = self.future.future_orderinfo(self.coin, self.contract_type, order, 2, 1, 50)
+            print(ret)
             order_info = self.future.future_orderinfo(self.coin, self.contract_type, order, 2, 1, 50)['orders'][0]
             status = order_info['status']
             order_price = order_info['price']
