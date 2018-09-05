@@ -40,9 +40,12 @@ amount = config['amount']
 times_atr = config['times_atr']
 grid_size = config['grid_size']
 clear_interval = config['clear_interval']
+amount_ratio = config['amount_ratio']
+fast = config['fast_kline']
+slow = config['slow_kline']
 
 class Grid:
-    def __init__(self, apikey, secretkey, okcoinRESTURL, coin, contract_type, kline_size, kline_num, bbo, leverage, amount, times_atr, grid_size, clear_interval, logger = None):
+    def __init__(self, apikey, secretkey, okcoinRESTURL, coin, contract_type, kline_size, kline_num, bbo, leverage, amount, times_atr, grid_size, clear_interval, amount_ratio, fast, slow, logger = None):
         self.future = Future(okcoinRESTURL, apikey, secretkey, logger)
         self.coin = coin
         self.contract_type = contract_type
@@ -53,6 +56,9 @@ class Grid:
         self.amount = amount
         self.times_atr = times_atr
         self.grid_size = grid_size
+        self.amount_ratio = amount_ratio
+        self.fast = fast
+        self.slow = slow
         if logger:
             self.logger = logger
         else:
@@ -100,90 +106,21 @@ class Grid:
             self.logger.info('init: long_order_at: ' + str(round(long_price, 3)) + ', short_order_at: ' + str(round(short_price, 3)))
             time.sleep(1)
 
-    '''
-    def adjust_open_orders(self, last, atr):
-        # check order status
-        for order in self.open_longs:
-            order_info = self.future.future_orderinfo(self.coin, self.contract_type, order, 2, 1, 50)[0]
-            status = order_info['status']
-            order_price = order_info['price']
-            low_limit = last - (self.grid_size + 2) * self.times_atr * atr
-            if status == '1' or status == '2' or order_price < low_limit:
-                if status == '1' or order_price < low_limit:
-                    self.future.future_cancel(self.coin, self.contract_type, order)
-                idx = self.open_longs.index(order)
-                price = last  - (idx + 1) * self.times_atr * atr
-                ret = self.future.open_long(self.coin, self.contract_type, price, self.amount, self.leverage, bbo = 0)
-                self.open_longs[idx] = ret
+    def kline_cross(self):
+        kline = self.future.future_kline(self.coin, self.contract_type, self.kline_size, self.kline_num)
+        close = [kline[i][4] for i in range(kline_num)]
+        close = np.array(close)
 
-        for order in self.open_shorts:
-            order_info = self.future.future_orderinfo(self.coin, self.contract_type, order, 2, 1, 50)[0]
-            status = order_info['status']
-            order_price = order_info['price']
-            up_limit = last + (self.grid_size + 2) * self.times_atr * atr
-            if status == '1' or status == '2' or order_price > up_limit:
-                if status == '1' or order_price > up_limit:
-                    self.future.future_cancel(self.coin, self.contract_type, order)
-                idx = self.open_shorts.index(order)
-                price = last  + (idx + 1) * self.times_atr * atr
-                ret = self.future.open_short(self.coin, self.contract_type, price, self.amount, self.leverage, bbo = 0)
-                self.open_shorts[idx] = ret
+        fast_kline = tb.SMA(close, self.fast)
+        slow_kline = tb.SMA(close, self.slow)
+        if fast_kline[-2] < slow_kline[-2] and fast_kline[-1] > slow_kline[-1]:
+            return 'gold'
+        elif fast_kline[-2] > slow_kline[-2] and fast_kline[-1] < slow_kline[-1]:
+            return 'dead'
+        else:
+            return 'nothing'
 
-    def adjust_close_orders(self, last, atr, long_amount, short_amount):
-        to_del = []
-        for order in self.close_longs:
-            order_info = self.future.future_orderinfo(self.coin, self.contract_type, order, 2, 1, 50)[0]
-            status = order_info['status']
-            order_price = order_info['price']
-            up_limit = last + (self.grid_size + 2) * self.times_atr * atr
-            if status == '2' or order_price > up_limit:
-                self.future.future_cancel(self.coin, self.contract_type, order)
-                idx = self.close_longs.index(order)
-                to_del.append(idx)
 
-        for i in to_del:
-            del self.cloes_longs[i]
-
-        i = 1
-        while long_amount > 0:
-            price = last + self.times_atr * atr * i
-            if long_amount > self.amount:
-                ret = self.future.close_long(self.coin, self.contract_type, price, self.amount, self.leverage, bbo = 0)
-                self.close_longs.append(ret)
-                long_amount -= self.amount
-            else:
-                ret = self.future.close_long(self.coin, self.contract_type, price, long_amount, self.leverage, bbo = 0)
-                self.close_longs.append(ret)
-                long_amount = 0
-            i += 1
-
-        to_del.clear()
-        for order in self.close_shorts:
-            order_info = self.future.future_orderinfo(self.coin, self.contract_type, order, 2, 1, 50)[0]
-            status = order_info['status']
-            order_price = order_info['price']
-            up_limit = last - (self.grid_size + 2) * self.times_atr * atr
-            if status == '2' or order_price < up_limit:
-                self.future.future_cancel(self.coin, self.contract_type, order)
-                idx = self.close_shorts.index(order)
-                to_del.append(idx)
-
-        for i in to_del:
-            del self.cloes_shorts[i]
-
-        i = 1
-        while short_amount > 0:
-            price = last - self.times_atr * atr * i
-            if short_amount > self.amount:
-                ret = self.future.close_short(self.coin, self.contract_type, price, self.amount, self.leverage, bbo = 0)
-                self.close_shorts.append(ret)
-                short_amount -= self.amount
-            else:
-                ret = self.future.close_short(self.coin, self.contract_type, price, long_amount, self.leverage, bbo = 0)
-                self.close_shorts.append(ret)
-                short_amount = 0
-            i += 1
-    '''
     def clear_orders(self):
         for order in self.open_longs:
             self.future.future_cancel(self.coin, self.contract_type, order)
@@ -192,6 +129,10 @@ class Grid:
 
     def run_forever(self):
         counter = 1
+        max_long_profit = 0
+        max_short_profit = 0
+        long_stop_loss = False
+        short_stop_loss = False
         while True:
             # get last, atr
             last, atr = self.get_last_atr()
@@ -206,29 +147,67 @@ class Grid:
             self.logger.info('last = ' + str(last))
 
             # init orders
-            if self.init:
+            if counter == 1:
                 self.init_orders(last, atr)
-                self.init = False
 
             # adjust orders
             #self.adjust_open_orders(last, atr)
             #self.adjust_close_orders(last, atr, long_amount, short_amount)
 
+            # process long position
             stop_win = 10
             stop_loss = -40
-            if long_amount > 0:
+
+            if long_profit < stop_loss:
+                long_stop_loss = True
+            if short_profit < stop_loss:
+                short_stop_loss = True
+
+            if long_amount > 0 and self.init:
                 stop_win -= (long_amount / self.amount - 1) * 1
-                if long_profit >= stop_win or long_profit < stop_loss:
+                if long_profit >= stop_win and not short_stop_loss:
                     ret = self.future.close_long(self.coin, self.contract_type, last, long_amount, self.leverage, bbo = 1)
+                # if stop loss, stop grid, open short
+                if long_profit < stop_loss:
+                    # long stop loss and open short
+                    ret = self.future.close_long(self.coin, self.contract_type, last, long_amount, self.leverage, bbo = 1)
+                    amount = self.amount_ratio * self.leverage * self.get_available()
+                    ret = self.future.open_short(self.coin, self.contract_type, last, amount, self.leverage, bbo = 0)
+                    self.init = False
+                    long_stop_loss = False
+
+
+            # process short position
             stop_win = 10
             stop_loss = -40
-            if short_amount > 0:
+            if short_amount > 0 and self.init:
                 stop_win -= (short_amount / self.amount - 1) * 1
-                if short_profit >= stop_win or long_profit < stop_loss:
+                if short_profit >= stop_win and not long_stop_loss:
                     ret = self.future.close_short(self.coin, self.contract_type, last, short_amount, self.leverage, bbo = 1)
+                # if stop loss, stop grid, open long
+                if short_profit < stop_loss:
+                    # short stop loss and open long
+                    ret = self.future.close_short(self.coin, self.contract_type, last, short_amount, self.leverage, bbo = 1)
+                    amount = self.amount_ratio * self.leverage * self.get_available()
+                    ret = self.future.open_long(self.coin, self.contract_type, last, amount, self.leverage, bbo = 1)
+                    self.init = False
+                    short_stop_loss = False
 
+            # one way up or down
+            if self.init == False:
+                if long_amount > 0:
+                    # if dead cross, close long, back to grid mode
+                    if self.kline_cross() == 'dead':
+                        self.future.close_long(self.coin, self.contract_type, last, long_amount, self.leverage, bbo = 1)
+                        self.init = True
 
-            if counter % self.clear_interval == 0:
+                if short_amount > 0:
+                    # if golden cross, close short, back to grid mode
+                    if self.kline_cross() == 'gold':
+                        self.future.close_short(self.coin, self.contract_type, last, short_amount, self.leverage, bbo = 1)
+                        self.init = True
+
+            if counter % self.clear_interval == 0 and self.init:
                 self.clear_orders()
                 self.init_orders()
 
@@ -236,6 +215,6 @@ class Grid:
             time.sleep(15)
 
 
-bot = Grid(apikey, secretkey, okcoinRESTURL, coin, contract_type, kline_size, kline_num, bbo, leverage, amount, times_atr, grid_size, clear_interval, logger = logger)
+bot = Grid(apikey, secretkey, okcoinRESTURL, coin, contract_type, kline_size, kline_num, bbo, leverage, amount, times_atr, grid_size, clear_interval, amount_ratio, fast, slow, logger = logger)
 
 bot.run_forever()
