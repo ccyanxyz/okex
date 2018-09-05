@@ -22,6 +22,10 @@ leverage = 20
 position = future.get_position(coin, contract_type)
 print(position)
 
+orders = future.future_orderinfo(coin, contract_type, -1, 1,  1, 50)
+print(orders)
+
+'''
 # open long
 ret = future.open_long(coin, contract_type, price, 100000000, leverage, bbo)
 print(ret)
@@ -48,3 +52,4 @@ ret = future.close_short(coin, contract_type, price, amount, leverage, bbo)
 print(ret)
 position = future.get_position(coin, contract_type)
 print(position)
+'''

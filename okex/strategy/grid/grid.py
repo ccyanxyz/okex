@@ -127,6 +127,15 @@ class Grid:
         else:
             return 'nothing'
 
+    def clear_all_pending_orders(self):
+        order_id = -1 # set order_id to -1 to get all unfilled(1) orders
+        status = 1 # unfilled:1, filled:2
+        page = 1
+        page_len = 50 # max 50
+        orders = self.future.future_orderinfo(self.coin, self.contract_type, order_id, status, page, page_len)
+        for order in orders:
+            id = order['order_id']
+            self.future.future_cancel(self.coin, self.contract_type, id)
 
     def clear_orders(self):
         for order in self.open_longs:
@@ -141,6 +150,10 @@ class Grid:
         long_stop_loss = False
         short_stop_loss = False
         while True:
+            # first clear all pending orders
+            if counter == 1:
+                self.clear_all_pending_orders()
+
             # get last, atr
             last, atr = self.get_last_atr()
 

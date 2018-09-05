@@ -9,11 +9,11 @@
     "bbo":0,
     "leverage":20,
     "grid_size":1,
-    "amount":10,
+    "amount":20,
     "times_atr":0.7,
     "clear_interval":120,
     "amount_ratio":0.3,
     "fast_kline":5,
     "slow_kline":20,
-    "gap":20
+    "gap":0.020
 }
