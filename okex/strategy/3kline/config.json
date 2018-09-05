@@ -1,0 +1,13 @@
+{
+    "api_key":"6d1f9dc9-95f2-4595-a9c0-20bd344a5154",
+    "secret_key":"C275C775AA323969F1CB936216735126",
+    "url":"www.okb.com",
+    "coin":"eos_usd",
+    "contract_type":"this_week",
+    "kline_size":"3min",
+    "kline_num":20,
+    "open_ratio":0.15,
+    "bbo":1,
+    "leverage":20,
+    "hold_for":10
+}
