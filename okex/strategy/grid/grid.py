@@ -43,9 +43,10 @@ clear_interval = config['clear_interval']
 amount_ratio = config['amount_ratio']
 fast = config['fast_kline']
 slow = config['slow_kline']
+gap = config['gap']
 
 class Grid:
-    def __init__(self, apikey, secretkey, okcoinRESTURL, coin, contract_type, kline_size, kline_num, bbo, leverage, amount, times_atr, grid_size, clear_interval, amount_ratio, fast, slow, logger = None):
+    def __init__(self, apikey, secretkey, okcoinRESTURL, coin, contract_type, kline_size, kline_num, bbo, leverage, amount, times_atr, grid_size, clear_interval, amount_ratio, fast, slow, gap, use_gap = True, logger = None):
         self.future = Future(okcoinRESTURL, apikey, secretkey, logger)
         self.coin = coin
         self.contract_type = contract_type
@@ -55,6 +56,8 @@ class Grid:
         self.leverage = leverage
         self.amount = amount
         self.times_atr = times_atr
+        self.gap = gap
+        self.use_gap = use_gap
         self.grid_size = grid_size
         self.amount_ratio = amount_ratio
         self.fast = fast
@@ -94,8 +97,12 @@ class Grid:
 
     def init_orders(self, last, atr):
         for i in range(self.grid_size):
-            long_price = last - (i + 1) * self.times_atr * atr
-            short_price = last + (i + 1) * self.times_atr * atr
+            if self.use_gap:
+                long_price = last - (i + 1) * self.gap
+                short_price = last + (i + 1) * self.gap
+            else:
+                long_price = last - (i + 1) * self.times_atr * atr
+                short_price = last + (i + 1) * self.times_atr * atr
 
             ret = self.future.open_long(self.coin, self.contract_type, long_price, self.amount, self.leverage, bbo = 0)
             self.open_longs.append(ret)
@@ -215,6 +222,6 @@ class Grid:
             time.sleep(15)
 
 
-bot = Grid(apikey, secretkey, okcoinRESTURL, coin, contract_type, kline_size, kline_num, bbo, leverage, amount, times_atr, grid_size, clear_interval, amount_ratio, fast, slow, logger = logger)
+bot = Grid(apikey, secretkey, okcoinRESTURL, coin, contract_type, kline_size, kline_num, bbo, leverage, amount, times_atr, grid_size, clear_interval, amount_ratio, fast, slow, gap, use_gap = True, logger = logger)
 
 bot.run_forever()

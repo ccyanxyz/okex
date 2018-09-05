@@ -14,5 +14,6 @@
     "clear_interval":120,
     "amount_ratio":0.3,
     "fast_kline":5,
-    "slow_kline":20
+    "slow_kline":20,
+    "gap":20
 }
