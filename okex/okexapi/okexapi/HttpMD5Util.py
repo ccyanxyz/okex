@@ -1,7 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-#用于进行http请求，以及MD5加密，生成签名的工具类
-
 import http.client
 import urllib
 import json
