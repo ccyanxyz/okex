@@ -40,6 +40,12 @@ class Base:
             id = order['order_id']
             self.future.future_cancel(symbol, contract_type, id)
 
-
-
-
+def get_logger():
+    logging.basicConfig(
+    #   filename = './log/' + log_filename + str(time.strftime('%m-%d %H:%M:%S')),
+            level = logging.INFO,
+            format = '[%(asctime)s] %(levelname)s [%(funcName)s: %(filename)s, %(lineno)d] %(message)s',
+            datefmt = '%Y-%m-%d %H:%M:%S',
+            filemode = 'a'
+    )
+    return logging.getLogger('tradebot')

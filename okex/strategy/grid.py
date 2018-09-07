@@ -6,7 +6,7 @@ import talib as tb
 import json
 import logging
 from okexapi.FutureAPI import Future
-from base import Base
+from base import *
 
 class Grid(Base):
     def __init__(self,
@@ -97,7 +97,7 @@ class Grid(Base):
 
     def kline_cross(self):
         kline = self.get_kline(self.coin, self.contract_type, self.kline_size, self.kline_num)
-        close = [kline[i][4] for i in range(kline_num)]
+        close = [kline[i][4] for i in range(self.kline_num)]
         close = np.array(close)
 
         fast_kline = tb.SMA(close, self.fast)
@@ -205,18 +205,6 @@ class Grid(Base):
 
             counter += 1
             time.sleep(self.interval)
-
-
-def get_logger():
-    logging.basicConfig(
-    #	filename = './log/' + log_filename + str(time.strftime('%m-%d %H:%M:%S')),
-            level = logging.INFO,
-            format = '[%(asctime)s] %(levelname)s [%(funcName)s: %(filename)s, %(lineno)d] %(message)s',
-            datefmt = '%Y-%m-%d %H:%M:%S',
-            filemode = 'a'
-    )
-    return logging.getLogger('tradebot')
-
 
 
 if __name__ == '__main__':
