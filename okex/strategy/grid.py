@@ -130,11 +130,11 @@ class Grid(Base):
             last, atr = self.get_last_atr()
 
             # get position
-            long_amount, long_profit, short_amount, short_profit = self.get_position()
+            long_amount, long_profit, short_amount, short_profit = self.get_position(self.coin, self.contract_type)
             self.logger.info('position: long_amount = %s, long_profit = %s, short_amount = %s, short_profit = %s' % (long_amount, long_profit, short_amount, short_profit))
 
             # get available coin amount
-            coin_available = self.get_available()
+            coin_available = self.get_available(self.coin)
             self.logger.info('coin_available = ' + str(coin_available))
             self.logger.info('last = ' + str(last))
 
@@ -220,7 +220,7 @@ def get_logger():
 
 
 if __name__ == '__main__':
-    
+
     config_path = sys.argv[1]
 
     f = open(config_path, encoding = 'utf-8')

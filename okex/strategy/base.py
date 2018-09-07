@@ -19,7 +19,7 @@ class Base:
 
     def get_kline(self, symbol, contract_type, kline_size, kline_num):
         kline = self.future.future_kline(symbol, contract_type, kline_size, kline_num)
-        
+
         return kline
 
     def get_position(self, symbol, contract_type):
@@ -35,8 +35,7 @@ class Base:
         status = 1 # unfilled orders, 2: filled orders
         page = 1
         page_len = 50 # max 50
-        ret = self.future.future_orderinfo(symbol, contract_type, order_id, status, page, page_len)
-        orders = ret['orders']
+        orders = self.future.future_orderinfo(symbol, contract_type, order_id, status, page, page_len)
         for order in orders:
             id = order['order_id']
             self.future.future_cancel(symbol, contract_type, id)
