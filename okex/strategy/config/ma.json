@@ -9,7 +9,7 @@
     "amount_ratio":0.25,
     "bbo":1,
     "leverage":20,
-    "slow":60,
+    "slow":20,
     "fast":5,
     "interval":15
 }

@@ -10,7 +10,7 @@ strategy = config['strategy']
 
 
 if __name__ == '__main__':
-    while os.system('python3 strategy/' + strategy + '/' + strategy + '.py'):
+    while os.system('python3 strategy/' + strategy + '.py  /root/okex/okex/strategy/config/' + strategy + '.json'):
         time.sleep(3)
         try:
             print('RESTARTNG...')

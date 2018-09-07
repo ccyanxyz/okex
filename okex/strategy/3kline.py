@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import time
 import arrow
@@ -5,38 +6,18 @@ from talib import SMA
 import json
 import logging
 from okexapi.FutureAPI import Future
+from base import *
 
-log_filename = 'trade.log'
-logging.basicConfig(
-	filename = './log/' + log_filename + str(time.strftime('%m-%d %H:%M:%S')),
-        level = logging.INFO,
-        format = '[%(asctime)s] %(levelname)s [%(funcName)s: %(filename)s, %(lineno)d] %(message)s',
-        datefmt = '%Y-%m-%d %H:%M:%S',
-        filemode = 'a'
-)
-logger = logging.getLogger('tradebot')
+class 3kline(Base):
 
-f = open('config.json', encoding = 'utf-8')
-config = json.load(f)
+    def __init__(self,
+            api_key,
+            secret_key,
+            url,
+            kline_size,
+            kline_num)
+    # TODO: rewrite
 
-#初始化apikey，secretkey,url
-apikey = config['api_key'] 
-secretkey = config['secret_key'] 
-okcoinRESTURL = config['url']
-
-
-#期货API
-future = Future(okcoinRESTURL, apikey, secretkey, logger)
-
-coin = config['coin']
-contract_type = config['contract_type']
-kline_size = config['kline_size']
-kline_num = config['kline_num']
-amount_ratio = config['open_ratio']
-
-bbo = config['bbo']
-leverage = config['leverage']
-hold_for = config['hold_for']
 
 def get_amount():
     coin_available = future.future_userinfo_4fix()['info'][coin[:3]]['contracts'][0]['available']
@@ -87,3 +68,32 @@ while True:
 	logger.info('no trading signal.')
 
     time.sleep(15)
+
+
+
+if __name__ == '__main__':
+    config_path = sys.argv[1]
+
+    f = open('config.json', encoding = 'utf-8')
+    config = json.load(f)
+
+    #初始化apikey，secretkey,url
+    apikey = config['api_key']
+    secretkey = config['secret_key']
+    okcoinRESTURL = config['url']
+
+
+    #期货API
+    future = Future(okcoinRESTURL, apikey, secretkey, logger)
+
+    coin = config['coin']
+    contract_type = config['contract_type']
+    kline_size = config['kline_size']
+    kline_num = config['kline_num']
+    amount_ratio = config['open_ratio']
+
+    bbo = config['bbo']
+    leverage = config['leverage']
+    hold_for = config['hold_for']
+
+
