@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import time
 import arrow
@@ -5,55 +6,42 @@ import talib as tb
 import json
 import logging
 from okexapi.FutureAPI import Future
+from base import Base
 
-log_filename = 'trade.log'
-logging.basicConfig(
-#	filename = './log/' + log_filename + str(time.strftime('%m-%d %H:%M:%S')),
-        level = logging.INFO,
-        format = '[%(asctime)s] %(levelname)s [%(funcName)s: %(filename)s, %(lineno)d] %(message)s',
-        datefmt = '%Y-%m-%d %H:%M:%S',
-        filemode = 'a'
-)
-logger = logging.getLogger('tradebot')
+class Grid(Base):
+    def __init__(self,
+            apikey,
+            secretkey,
+            url,
+            coin, # symbol, 'eos_usdt'
+            contract_type, # 'this_week', 'next_week', 'quarter'
+            kline_size, # 15min
+            kline_num, # number of klines to get
+            bbo, # 0, 1, if market order or not
+            leverage, # future leverage
+            amount, # amount for each order
+            times_atr, # coefficient, calculate gap
+            grid_size, # how many orders on each side
+            interval, # time interval to refresh, 15s
+            clear_interval, # coef, how long to clear unfilled orders
+            amount_ratio, # percentage of available coin
+            fast, # fast kline, 5
+            slow, # slow kline, 20
+            gap, # grid gap, fixed
+            use_gap, # if True, use fixed gap, not ATR
+            stop_win, # loss control
+            stop_loss, # loss control
+            logger = None):
 
-f = open('/root/okex/okex/strategy/grid/config.json', encoding = 'utf-8')
-config = json.load(f)
+        super(Grid, self).__init__(apikey, secretkey, url, logger)
 
-#初始化apikey，secretkey,url
-apikey = config['api_key']
-secretkey = config['secret_key']
-okcoinRESTURL = config['url']
-
-
-#期货API
-future = Future(okcoinRESTURL, apikey, secretkey, logger)
-
-coin = config['coin']
-contract_type = config['contract_type']
-kline_size = config['kline_size']
-kline_num = config['kline_num']
-
-bbo = config['bbo']
-leverage = config['leverage']
-
-amount = config['amount']
-times_atr = config['times_atr']
-grid_size = config['grid_size']
-clear_interval = config['clear_interval']
-amount_ratio = config['amount_ratio']
-fast = config['fast_kline']
-slow = config['slow_kline']
-gap = config['gap']
-
-class Grid:
-    def __init__(self, apikey, secretkey, okcoinRESTURL, coin, contract_type, kline_size, kline_num, bbo, leverage, amount, times_atr, grid_size, clear_interval, amount_ratio, fast, slow, gap, use_gap = True, logger = None):
-        self.future = Future(okcoinRESTURL, apikey, secretkey, logger)
         self.coin = coin
         self.contract_type = contract_type
         self.kline_size = kline_size
         self.kline_num = kline_num
         self.bbo = bbo
         self.leverage = leverage
+        self.interval = interval
         self.amount = amount
         self.times_atr = times_atr
         self.gap = gap
@@ -65,18 +53,19 @@ class Grid:
         if logger:
             self.logger = logger
         else:
-            self.logger = logging.getLogger('gridbot')
+            self.logger = logging.getLogger('dual mode reaper')
 
         self.init = True
         self.clear_interval = clear_interval
 
         self.open_longs = []
-        self.close_longs = []
         self.open_shorts = []
-        self.close_shorts = []
+
+        self.stop_win = stop_win
+        self.stop_loss = stop_loss
 
     def get_last_atr(self):
-        kline = self.future.future_kline(self.coin, self.contract_type, self.kline_size, self.kline_num)
+        kline = self.get_kline(self.coin, self.contract_type, self.kline_size, self.kline_num)
         high = [kline[i][2] for i in range(kline_num)]
         low = [kline[i][3] for i in range(kline_num)]
         close = [kline[i][4] for i in range(kline_num)]
@@ -86,14 +75,6 @@ class Grid:
 
         atr = tb.ATR(high, low, close, timeperiod = 14)
         return close[-1], atr[-1]
-
-    def get_position(self):
-        long_amount, long_profit, short_amount, short_profit = self.future.get_position(coin, contract_type)
-        return long_amount, long_profit, short_amount, short_profit
-
-    def get_available(self):
-        coin_available = future.future_userinfo_4fix()['info'][coin[:3]]['contracts'][0]['available']
-        return coin_available
 
     def init_orders(self, last, atr):
         for i in range(self.grid_size):
@@ -111,10 +92,11 @@ class Grid:
             self.open_shorts.append(ret)
 
             self.logger.info('init: long_order_at: ' + str(round(long_price, 3)) + ', short_order_at: ' + str(round(short_price, 3)))
+            # avoid high frequency calls to website API
             time.sleep(1)
 
     def kline_cross(self):
-        kline = self.future.future_kline(self.coin, self.contract_type, self.kline_size, self.kline_num)
+        kline = self.get_kline(self.coin, self.contract_type, self.kline_size, self.kline_num)
         close = [kline[i][4] for i in range(kline_num)]
         close = np.array(close)
 
@@ -126,16 +108,6 @@ class Grid:
             return 'dead'
         else:
             return 'nothing'
-
-    def clear_all_pending_orders(self):
-        order_id = -1 # set order_id to -1 to get all unfilled(1) orders
-        status = 1 # unfilled:1, filled:2
-        page = 1
-        page_len = 50 # max 50
-        orders = self.future.future_orderinfo(self.coin, self.contract_type, order_id, status, page, page_len)
-        for order in orders:
-            id = order['order_id']
-            self.future.future_cancel(self.coin, self.contract_type, id)
 
     def clear_orders(self):
         for order in self.open_longs:
@@ -152,7 +124,7 @@ class Grid:
         while True:
             # first clear all pending orders
             if counter == 1:
-                self.clear_all_pending_orders()
+                self.clear_pending_orders(self.coin, self.contract_type)
 
             # get last, atr
             last, atr = self.get_last_atr()
@@ -198,8 +170,8 @@ class Grid:
 
 
             # process short position
-            stop_win = 10
-            stop_loss = -40
+            stop_win = self.stop_win
+            stop_loss = self.stop_loss
             if short_amount > 0 and self.init:
                 stop_win -= (short_amount / self.amount - 1) * 1
                 if short_profit >= stop_win and not long_stop_loss:
@@ -232,9 +204,77 @@ class Grid:
                 self.init_orders()
 
             counter += 1
-            time.sleep(15)
+            time.sleep(self.interval)
 
 
-bot = Grid(apikey, secretkey, okcoinRESTURL, coin, contract_type, kline_size, kline_num, bbo, leverage, amount, times_atr, grid_size, clear_interval, amount_ratio, fast, slow, gap, use_gap = True, logger = logger)
+def get_logger():
+    logging.basicConfig(
+    #	filename = './log/' + log_filename + str(time.strftime('%m-%d %H:%M:%S')),
+            level = logging.INFO,
+            format = '[%(asctime)s] %(levelname)s [%(funcName)s: %(filename)s, %(lineno)d] %(message)s',
+            datefmt = '%Y-%m-%d %H:%M:%S',
+            filemode = 'a'
+    )
+    return logging.getLogger('tradebot')
 
-bot.run_forever()
+
+
+if __name__ == '__main__':
+    
+    config_path = sys.argv[1]
+
+    f = open(config_path, encoding = 'utf-8')
+    config = json.load(f)
+
+    apikey = config['api_key']
+    secretkey = config['secret_key']
+    url = config['url']
+
+    coin = config['coin']
+    contract_type = config['contract_type']
+    kline_size = config['kline_size']
+    kline_num = config['kline_num']
+
+    bbo = config['bbo']
+    leverage = config['leverage']
+
+    amount = config['amount']
+    times_atr = config['times_atr']
+    grid_size = config['grid_size']
+    clear_interval = config['clear_interval']
+    amount_ratio = config['amount_ratio']
+    fast = config['fast_kline']
+    slow = config['slow_kline']
+    gap = config['gap']
+    use_gap = config['use_gap']
+
+    interval = config['interval']
+    stop_win = config['stop_win']
+    stop_loss = config['stop_loss']
+
+    logger = get_logger()
+
+    dual_mode_reaper = Grid(apikey,
+            secretkey,
+            url,
+            coin,
+            contract_type,
+            kline_size,
+            kline_num,
+            bbo,
+            leverage,
+            amount,
+            times_atr,
+            grid_size,
+            interval,
+            clear_interval,
+            amount_ratio,
+            fast,
+            slow,
+            gap,
+            use_gap,
+            stop_win,
+            stop_loss,
+            logger = logger)
+
+    dual_mode_reaper.run_forever()
