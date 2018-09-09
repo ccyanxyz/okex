@@ -11,5 +11,6 @@
     "leverage":20,
     "slow":20,
     "fast":5,
-    "interval":15
+    "interval":15,
+    "stop_loss":-20
 }

@@ -25,6 +25,7 @@ class Ma(Base):
             fast, # fast kline period, 5
             slow, # slow kline period, 20
             interval,
+            stop_loss,
             logger = None):
 
         super(Ma, self).__init__(api_key, secret_key, url, logger)
@@ -38,6 +39,7 @@ class Ma(Base):
         self.fast = fast
         self.slow = slow
         self.interval = interval
+        self.stop_loss = stop_loss
 
 
     def get_amount(self):
@@ -63,7 +65,21 @@ class Ma(Base):
         kline = self.get_kline(self.coin, self.contract_type, self.kline_size, 1)
         return kline[0][4]
 
+    def update_stop_loss(self, stop_loss, current_profit):
+        if current_profit < 10:
+            return stop_loss
+        elif current_profit >= 10 and current_profit < 60:
+            return current_profit * 0.5
+        elif current_profit >= 60 and current_profit < 100:
+            return current_profit * 0.6
+        elif current_profit >= 100 and current_profit < 150:
+            return current_profit * 0.7
+        else:
+            return current_profit * 0.8
+
     def run_forever(self):
+        stop_loss = self.stop_loss
+
         while True:
             long_amount, long_profit, short_amount, short_profit = self.get_position(self.coin, self.contract_type)
             logger.info('position: long_amount = %s, long_profit = %s, short_amount = %s, short_profit = %s' % (long_amount, long_profit, short_amount, short_profit))
@@ -73,28 +89,45 @@ class Ma(Base):
 
             last = self.get_last()
 
+            current_profit = 0
+            if long_amount > 0:
+                current_profit  = long_profit
+            if short_amount > 0:
+                current_profit = short_profit
+            stop_loss = self.update_stop_loss(stop_loss, current_profit)
+
+            if long_profit < stop_loss:
+                self.future.close_long(self.coin, self.contract_type, last, long_amount, self.leverage, self.bbo)
+                stop_loss = self.stop_loss
+                self.logger.info('close long at: ' + str(last) + ', amount: ' + str(long_amount))
+
+            if short_profit < stop_loss:
+                self.future.close_short(self.coin, self.contract_type, last, short_amount, self.leverage, self.bbo)
+                stop_loss = self.stop_loss
+                self.logger.info('close short at: ' + str(last) + ', amount: ' + str(short_amount))
+
+
             cross = self.ma_cross()
             if cross == 'gold' and long_amount < 1:
                 logger.info('golden cross.')
                 if short_amount > 0:
-                    logger.info('close short, amount: %d' % short_amount)
+                    logger.info('close short at: %f, amount: %d' % (last, short_amount))
                     self.future.close_short(self.coin, self.contract_type, last, short_amount, self.leverage, self.bbo)
                 amount = self.get_amount()
                 self.future.open_long(self.coin, self.contract_type, last, amount, self.leverage, self.bbo)
-                logger.info('open long, amount: %d' % amount)
+                logger.info('open long at: %f, amount: %d' % (last, amount))
             elif cross == 'dead' and short_amount < 1:
                 logger.info('dead cross.')
                 if long_amount > 0:
-                    logger.info('close long, amount: %d' % long_amount)
+                    logger.info('close long at: %f, amount: %d' % (last, long_amount))
                     self.future.close_long(self.coin, self.contract_type, last, long_amount, self.leverage, self.bbo)
                 amount = get_amount()
                 self.future.open_short(self.coin, self.contract_type, last, amount, self.leverage, self.bbo)
-                logger.info('open short, amount: %d' % amount)
+                logger.info('open short at: %f, amount: %d' % (last, amount))
             else:
                 logger.info('No trading signal.')
 
             time.sleep(self.interval)
-
 
 
 if __name__ == '__main__':
@@ -119,6 +152,7 @@ if __name__ == '__main__':
 
     bbo = config['bbo']
     leverage = config['leverage']
+    stop_loss = config['stop_loss']
 
     logger = get_logger()
 
@@ -135,6 +169,7 @@ if __name__ == '__main__':
             fast,
             slow,
             interval,
+            stop_loss,
             logger = logger)
 
     ma_bot.run_forever()
