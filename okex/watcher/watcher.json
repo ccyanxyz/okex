@@ -9,6 +9,6 @@
     "amount_ratio":0.25,
     "bbo":1,
     "leverage":20,
-    "lower":4.95,
-    "upper":4.85
+    "lower":4.85,
+    "upper":4.95
 }
