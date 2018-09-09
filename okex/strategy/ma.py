@@ -96,6 +96,8 @@ class Ma(Base):
                 current_profit = short_profit
             stop_loss = self.update_stop_loss(stop_loss, current_profit)
 
+            self.logger.info('stop_loss: ' + str(stop_loss))
+
             if long_profit < stop_loss:
                 self.future.close_long(self.coin, self.contract_type, last, long_amount, self.leverage, self.bbo)
                 stop_loss = self.stop_loss
