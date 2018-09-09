@@ -54,12 +54,24 @@ class Ma(Base):
         fast_ma = tb.SMA(close, self.fast)
         slow_ma = tb.SMA(close, self.slow)
 
+        '''
+        # stable version
         if fast_ma[-3] < slow_ma[-3] and fast_ma[-2] >= slow_ma[-2]:
             return 'gold'
         elif fast_ma[-3] > slow_ma[-3] and fast_ma[-2] <= slow_ma[-2]:
             return 'dead'
         else:
             return 'nothing'
+        '''
+
+        # unstable version
+        if fast_ma[-2] < slow_ma[-2] and fast_ma[-1] >= slow_ma[-1]:
+            return 'gold'
+        elif fast_ma[-2] > slow_ma[-2] and fast_ma[-1] <= slow_ma[-1]:
+            return 'dead'
+        else:
+            return 'nothing'
+
 
     def get_last(self):
         kline = self.get_kline(self.coin, self.contract_type, self.kline_size, 1)
@@ -69,13 +81,25 @@ class Ma(Base):
         if current_profit < 10:
             return stop_loss
         elif current_profit >= 10 and current_profit < 60:
-            return current_profit * 0.5
+            if current_profit * 0.5 > stop_loss:
+                return current_profit * 0.5
+            else:
+                return stop_loss
         elif current_profit >= 60 and current_profit < 100:
-            return current_profit * 0.6
+            if current_profit * 0.6 > stop_loss:
+                return current_profit * 0.6
+            else:
+                return stop_loss
         elif current_profit >= 100 and current_profit < 150:
-            return current_profit * 0.7
+            if current_profit * 0.7 > stop_loss:
+                return current_profit * 0.7
+            else:
+                return stop_loss
         else:
-            return current_profit * 0.8
+            if current_profit * 0.8 > stop_loss:
+                return current_profit * 0.8
+            else:
+                return stop_loss
 
     def run_forever(self):
         stop_loss = self.stop_loss
@@ -94,34 +118,40 @@ class Ma(Base):
                 current_profit  = long_profit
             if short_amount > 0:
                 current_profit = short_profit
+            if current_profit == 0:
+                stop_loss = self.stop_loss
             stop_loss = self.update_stop_loss(stop_loss, current_profit)
 
             self.logger.info('stop_loss: ' + str(stop_loss))
+            print(self.coin, self.contract_type, last, long_amount, self.leverage, self.bbo)
+            print(self.coin, self.contract_type, last, short_amount, self.leverage, self.bbo)
 
-            if long_profit < stop_loss:
+            if long_profit < stop_loss and long_amount > 0:
                 self.future.close_long(self.coin, self.contract_type, last, long_amount, self.leverage, self.bbo)
                 stop_loss = self.stop_loss
                 self.logger.info('close long at: ' + str(last) + ', amount: ' + str(long_amount))
 
-            if short_profit < stop_loss:
+            if short_profit < stop_loss and short_amount > 0:
                 self.future.close_short(self.coin, self.contract_type, last, short_amount, self.leverage, self.bbo)
                 stop_loss = self.stop_loss
                 self.logger.info('close short at: ' + str(last) + ', amount: ' + str(short_amount))
 
 
             cross = self.ma_cross()
-            if cross == 'gold' and long_amount < 1:
+            if cross == 'gold' and long_amount < 10:
                 logger.info('golden cross.')
                 if short_amount > 0:
                     logger.info('close short at: %f, amount: %d' % (last, short_amount))
+                    stop_loss = self.stop_loss
                     self.future.close_short(self.coin, self.contract_type, last, short_amount, self.leverage, self.bbo)
                 amount = self.get_amount()
                 self.future.open_long(self.coin, self.contract_type, last, amount, self.leverage, self.bbo)
                 logger.info('open long at: %f, amount: %d' % (last, amount))
-            elif cross == 'dead' and short_amount < 1:
+            elif cross == 'dead' and short_amount < 10:
                 logger.info('dead cross.')
                 if long_amount > 0:
                     logger.info('close long at: %f, amount: %d' % (last, long_amount))
+                    stop_loss = self.stop_loss
                     self.future.close_long(self.coin, self.contract_type, last, long_amount, self.leverage, self.bbo)
                 amount = get_amount()
                 self.future.open_short(self.coin, self.contract_type, last, amount, self.leverage, self.bbo)
