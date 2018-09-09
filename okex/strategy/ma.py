@@ -43,7 +43,7 @@ class Ma(Base):
 
 
     def get_amount(self):
-        coin_available = self.get_available(self.coin, self.contract_type)
+        coin_available = self.get_available(self.coin)
 
         return int(self.leverage * amount_ratio * coin_available)
 
@@ -151,7 +151,7 @@ class Ma(Base):
                     logger.info('close long at: %f, amount: %d' % (last, long_amount))
                     stop_loss = self.stop_loss
                     self.future.close_long(self.coin, self.contract_type, last, long_amount, self.leverage, self.bbo)
-                amount = get_amount()
+                amount = self.get_amount()
                 self.future.open_short(self.coin, self.contract_type, last, amount, self.leverage, self.bbo)
                 logger.info('open short at: %f, amount: %d' % (last, amount))
             else:
