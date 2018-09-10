@@ -46,8 +46,9 @@ class Ma(Base):
 
     def get_amount(self):
         coin_available = self.get_available(self.coin)
-
-        return int(self.leverage * amount_ratio * coin_available)
+        price = self.get_last()
+        total = coin_available * price * self.leverage
+        return int(amount_ratio * total)
 
     def ma_cross(self, fast_ma, slow_ma):
         # unstable version
