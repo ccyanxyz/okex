@@ -1,0 +1,17 @@
+{
+    "api_key":"6d1f9dc9-95f2-4595-a9c0-20bd344a5154",
+    "secret_key":"C275C775AA323969F1CB936216735126",
+    "url":"www.okb.com",
+    "coin":"eos_usd",
+    "contract_type":"this_week",
+    "kline_size":"15min",
+    "kline_num":200,
+    "amount_ratio":0.15,
+    "bbo":1,
+    "leverage":20,
+    "slow":20,
+    "fast":5,
+    "interval":5,
+    "stop_loss":-20,
+    "band_width":0.003
+}
