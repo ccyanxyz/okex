@@ -6,12 +6,12 @@
     "contract_type":"this_week",
     "kline_size":"15min",
     "kline_num":200,
-    "amount_ratio":1.0,
+    "amount_ratio":4.0,
     "bbo":1,
     "leverage":20,
     "slow":20,
     "fast":5,
     "interval":5,
     "stop_loss":-20,
-    "band_width":0.003
+    "band_width":0.005
 }
