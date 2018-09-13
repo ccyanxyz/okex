@@ -28,7 +28,7 @@ class Spot:
         params=''
         if symbol:
             params = 'symbol=%(symbol)s' %{'symbol':symbol}
-        return httpGet(self.__url,DEPTH_RESOURCE,params) 
+        return httpGet(self.__url,DEPTH_RESOURCE,params)
 
     #获取OKCOIN现货历史交易信息
     def trades(self,symbol = ''):
@@ -37,7 +37,7 @@ class Spot:
         if symbol:
             params = 'symbol=%(symbol)s' %{'symbol':symbol}
         return httpGet(self.__url,TRADES_RESOURCE,params)
-    
+
     #获取用户现货账户信息
     def userinfo(self):
         USERINFO_RESOURCE = "/api/v1/userinfo.do"
@@ -58,7 +58,7 @@ class Spot:
             params['price'] = str(price)
         if amount:
             params['amount'] = str(amount)
-            
+
         params['sign'] = buildMySign(params,self.__secretkey)
         return httpPost(self.__url,TRADE_RESOURCE,params)
 
@@ -121,7 +121,7 @@ class Spot:
            params['sign'] = buildMySign(params,self.__secretkey)
            return httpPost(self.__url,ORDER_HISTORY_RESOURCE,params)
 
-    
+
     def buy(self, symbol, price, amount, bbo = False):
         trade_type = 'buy'
         if bbo:
@@ -132,7 +132,7 @@ class Spot:
         else:
             self.logger.error('buy order failed.')
             return ''
- 
+
     def sell(self, symbol, price, amount, bbo = False):
         trade_type = 'sell'
         if bbo:
