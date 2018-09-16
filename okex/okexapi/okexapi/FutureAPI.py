@@ -50,7 +50,7 @@ class Future:
         return httpGet(self.__url,FUTURE_HOLD_AMOUNT,params)
 
     #OKCoin期货市场深度信息
-    def future_depth(self,symbol,contractType,size): 
+    def future_depth(self,symbol,contractType,size):
         FUTURE_DEPTH_RESOURCE = "/api/v1/future_depth.do"
         params = ''
         if symbol:
@@ -202,7 +202,7 @@ class Future:
             short_profit = float(position['holding'][0]['sell_profit_lossratio'])
             return [long_amount, long_profit, short_amount, short_profit]
         else:
-            return [0, 0, 0, 0] 
+            return [0, 0, 0, 0]
 
     def open_long(self, coin, contract_type, price, amount, leverage, bbo = 1):
         ret = self.future_trade(coin, contract_type, price, amount, 1, bbo, leverage)
@@ -211,7 +211,7 @@ class Future:
         else:
             self.logger.info('open long failed, error code: ' + str(ret['error_code']))
             return ''
-   
+
     def close_long(self, coin, contract_type, price, amount, leverage, bbo = 1):
         ret = self.future_trade(coin, contract_type, price, amount, 3, bbo, leverage)
         if ret['result'] == True:
@@ -219,7 +219,7 @@ class Future:
         else:
             self.logger.info('close long failed, error code: ' + str(ret['error_code']))
             return ''
-   
+
     def open_short(self, coin, contract_type, price, amount, leverage, bbo = 1):
         ret = self.future_trade(coin, contract_type, price, amount, 2, bbo, leverage)
         if ret['result'] == True:
@@ -229,7 +229,7 @@ class Future:
             return ''
 
     def close_short(self, coin, contract_type, price, amount, leverage, bbo = 1):
-        ret = self.future_trade(coin, contract_type, price, amount, 4, bbo, leverage) 
+        ret = self.future_trade(coin, contract_type, price, amount, 4, bbo, leverage)
         if ret['result'] == True:
             return ret['order_id']
         else:

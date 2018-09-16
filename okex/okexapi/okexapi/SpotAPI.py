@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from HttpMD5Util import buildMySign,httpGet,httpPost
+from .HttpMD5Util import buildMySign,httpGet,httpPost
 import logging
 
 class Spot:
@@ -37,6 +37,18 @@ class Spot:
         if symbol:
             params = 'symbol=%(symbol)s' %{'symbol':symbol}
         return httpGet(self.__url,TRADES_RESOURCE,params)
+
+    # get kline
+    def spot_kline(self, symbol, type_, size = None, since = None):
+        KLINE_RESOURCE = "/api/v1/kline.do"
+        params = 'symbol=' + symbol + '&type=' + type_
+        if size:
+            params += '&size=' + str(size)
+        if since:
+            params += '&since=' + str(since)
+        return httpGet(self.__url, KLINE_RESOURCE, params)
+
+
 
     #获取用户现货账户信息
     def userinfo(self):
