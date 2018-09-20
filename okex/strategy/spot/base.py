@@ -32,6 +32,10 @@ class Base:
         ret = self.spot.order_info(symbol, order_id)
         return ret
 
+    def get_last(self, symbol):
+        kline = self.get_kline(symbol, '1min', 1)
+        return kline[-1][4]
+
     def clear_pending_orders(self, symbol):
         order_id = -1 # get unfilled or partially filled orders
         orders = self.get_order_info(symbol, order_id)['orders']

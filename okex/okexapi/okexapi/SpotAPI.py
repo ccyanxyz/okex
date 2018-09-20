@@ -134,9 +134,9 @@ class Spot:
            return httpPost(self.__url,ORDER_HISTORY_RESOURCE,params)
 
 
-    def buy(self, symbol, price, amount, bbo = False):
+    def buy(self, symbol, price, amount, bbo = 0):
         trade_type = 'buy'
-        if bbo:
+        if bbo == 1:
             trade_type = 'buy_market'
         ret = self.trade(symbol, trade_type, price, amount)
         if ret['result'] == True:
@@ -145,9 +145,9 @@ class Spot:
             self.logger.error('buy order failed.')
             return ''
 
-    def sell(self, symbol, price, amount, bbo = False):
+    def sell(self, symbol, price, amount, bbo = 0):
         trade_type = 'sell'
-        if bbo:
+        if bbo == 1:
             trade_type = 'sell_market'
         ret = self.trade(symbol, trade_type, price, amount)
         if ret['result'] == True:

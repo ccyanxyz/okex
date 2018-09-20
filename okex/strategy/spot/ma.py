@@ -15,81 +15,46 @@ class Ma(Base):
             api_key,
             secret_key,
             url,
-            coin,
-            contract_type,
+            symbol, 
             kline_size, # kline size, 15min
             kline_num, # number of klines to get
             amount_ratio, # percentage of available coins
             bbo, # 1: market price, 0: use given price
-            leverage, # leverage, 10 or 20
             fast, # fast kline period, 5
             slow, # slow kline period, 20
             interval,
-            stop_loss,
             band_width,
             logger = None):
 
         super(Ma, self).__init__(api_key, secret_key, url, logger)
-        self.coin = coin
-        self.contract_type = contract_type
+        self.symbol = symbol
+        idx = symbol.index('_')
+        self.coin = symbol[:idx]
+        self.currency = symbol[idx + 1:]
         self.kline_size = kline_size
         self.kline_num = kline_num
         self.amount_ratio = amount_ratio
         self.bbo = bbo
-        self.leverage = leverage
         self.fast = fast
         self.slow = slow
         self.interval = interval
-        self.stop_loss = stop_loss
         self.band_width = band_width
 
 
-    def get_amount(self):
-        coin_available = self.get_available(self.coin)
-        price = self.get_last()
-        total = coin_available * price * self.leverage / 10
-        return int(amount_ratio * total - 1)
+    def get_amount(self, coin):
+
+        return self.get_available(coin)
 
     def ma_cross(self, fast_ma, slow_ma):
-        # unstable version
-        if fast_ma[-2] < slow_ma[-2] and fast_ma[-1] >= slow_ma[-1]:
+        # stable version
+        if fast_ma[-3] < slow_ma[-3] and fast_ma[-2] >= slow_ma[-2]:
             return 'gold'
-        elif fast_ma[-2] > slow_ma[-2] and fast_ma[-1] <= slow_ma[-1]:
+        elif fast_ma[-3] > slow_ma[-3] and fast_ma[-2] <= slow_ma[-2]:
             return 'dead'
         else:
             return 'nothing'
 
-
-    def get_last(self):
-        kline = self.get_kline(self.coin, self.contract_type, self.kline_size, 1)
-        return kline[0][4]
-
-    def update_stop_loss(self, stop_loss, current_profit):
-        if current_profit < 10:
-            return stop_loss
-        elif current_profit >= 10 and current_profit < 60:
-            if current_profit * 0.5 > stop_loss:
-                return current_profit * 0.5
-            else:
-                return stop_loss
-        elif current_profit >= 60 and current_profit < 100:
-            if current_profit * 0.6 > stop_loss:
-                return current_profit * 0.6
-            else:
-                return stop_loss
-        elif current_profit >= 100 and current_profit < 150:
-            if current_profit * 0.7 > stop_loss:
-                return current_profit * 0.7
-            else:
-                return stop_loss
-        else:
-            if current_profit * 0.8 > stop_loss:
-                return current_profit * 0.8
-            else:
-                return stop_loss
-
     def run_forever(self):
-        stop_loss = self.stop_loss
 
         while True:
             long_amount, long_profit, short_amount, short_profit = self.get_position(self.coin, self.contract_type)
