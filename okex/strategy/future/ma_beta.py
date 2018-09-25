@@ -65,6 +65,7 @@ class Ma(Base):
         return kline[0][4]
 
     def update_stop_loss(self, stop_loss, current_profit):
+        '''
         if current_profit < 10:
             return stop_loss
         elif current_profit >= 10 and current_profit < 60:
@@ -87,6 +88,15 @@ class Ma(Base):
                 return current_profit * 0.8
             else:
                 return stop_loss
+        '''
+        if current_profit > 100:
+            return current_profit * 0.7
+        elif current_profit > 40:
+            return 20
+        elif current_profit > 20:
+            return 0
+        else:
+            return stop_loss
 
     def run_forever(self):
         stop_loss = self.stop_loss
