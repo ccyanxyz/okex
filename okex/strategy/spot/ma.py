@@ -15,7 +15,7 @@ class Ma(Base):
             api_key,
             secret_key,
             url,
-            symbol, 
+            symbol,
             kline_size, # kline size, 15min
             kline_num, # number of klines to get
             amount_ratio, # percentage of available coins
@@ -66,16 +66,16 @@ class Ma(Base):
 
             kline = self.get_kline(self.symbol, self.kline_size, self.kline_num)
 
-            close = np.array([kline[i][4] for i in range(self.kline_num)])
+            close = np.array([float(kline[i][4]) for i in range(self.kline_num)])
 
-            fast_ma = tb.SMA(close, self.fast)
-            slow_ma = tb.SMA(close, self.slow)
+            fast_ma = tb.SMA(close, int(self.fast))
+            slow_ma = tb.SMA(close, int(self.slow))
             slow_upper = slow_ma + self.band_width
             slow_lower = slow_ma - self.band_width
 
             last = kline[-1][4]
             self.logger.info('last: ' + str(last))
-          
+
             cross_with_upper = self.ma_cross(fast_ma, slow_upper)
             cross_with_lower = self.ma_cross(fast_ma, slow_lower)
             cross_with_slow = self.ma_cross(fast_ma, slow_ma)
@@ -114,8 +114,6 @@ if __name__ == '__main__':
     interval = config['interval']
 
     bbo = config['bbo']
-    leverage = config['leverage']
-    stop_loss = config['stop_loss']
     band_width = config['band_width']
     least_amount = config['least_amount']
 
@@ -129,14 +127,13 @@ if __name__ == '__main__':
             kline_num,
             amount_ratio,
             bbo,
-            leverage,
             fast,
             slow,
             interval,
-            stop_loss,
             band_width,
             least_amount,
             logger = logger)
+
 
     ma_bot.run_forever()
 
