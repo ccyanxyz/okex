@@ -2,15 +2,13 @@ import os
 import time
 import json
 import logging
+import sys
 
-f = open('runner_config.json', 'r')
-config = json.load(f)
-
-strategy = config['strategy']
-
+strategy = sys.argv[1]
+config = sys.argv[2]
 
 if __name__ == '__main__':
-    while os.system('python3 strategy/' + strategy + '.py  /root/okex/okex/strategy/config/' + strategy + '.json'):
+    while os.system('python3 ' + strategy + ' ' + config):
         time.sleep(3)
         try:
             print('RESTARTNG...')
