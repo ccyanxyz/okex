@@ -24,6 +24,7 @@ class Ma(Base):
             slow, # slow kline period, 20
             interval,
             band_width,
+            least_amount,
             logger = None):
 
         super(Ma, self).__init__(api_key, secret_key, url, logger)
@@ -39,6 +40,7 @@ class Ma(Base):
         self.slow = slow
         self.interval = interval
         self.band_width = band_width
+        self.least_amount = least_amount
 
 
     def get_amount(self, coin):
@@ -57,13 +59,13 @@ class Ma(Base):
     def run_forever(self):
 
         while True:
-            long_amount, long_profit, short_amount, short_profit = self.get_position(self.coin, self.contract_type)
-            self.logger.info('position: long_amount = %s, long_profit = %s, short_amount = %s, short_profit = %s' % (long_amount, long_profit, short_amount, short_profit))
-
+            usdt_available = self.get_available('usdt')
             coin_available = self.get_available(self.coin)
-            self.logger.info('coin_available = ' + str(coin_available))
 
-            kline = self.get_kline(self.coin, self.contract_type, self.kline_size, self.kline_num)
+            self.logger.info('position: usdt = %s, %s = %s' % (usdt_available, self.coin, coin_available))
+
+            kline = self.get_kline(self.symbol, self.kline_size, self.kline_num)
+
             close = np.array([kline[i][4] for i in range(self.kline_num)])
 
             fast_ma = tb.SMA(close, self.fast)
@@ -73,54 +75,21 @@ class Ma(Base):
 
             last = kline[-1][4]
             self.logger.info('last: ' + str(last))
-
-            current_profit = 0
-            if long_amount > 0:
-                current_profit  = long_profit
-            if short_amount > 0:
-                current_profit = short_profit
-            if current_profit == 0:
-                stop_loss = self.stop_loss
-            stop_loss = self.update_stop_loss(stop_loss, current_profit)
-
-            self.logger.info('stop_loss: ' + str(stop_loss))
-
-            if long_profit < stop_loss and long_amount > 0:
-                self.future.close_long(self.coin, self.contract_type, last, long_amount, self.leverage, self.bbo)
-                stop_loss = self.stop_loss
-                self.logger.info('close long at: ' + str(last) + ', amount: ' + str(long_amount))
-
-            if short_profit < stop_loss and short_amount > 0:
-                self.future.close_short(self.coin, self.contract_type, last, short_amount, self.leverage, self.bbo)
-                stop_loss = self.stop_loss
-                self.logger.info('close short at: ' + str(last) + ', amount: ' + str(short_amount))
-
-
+          
             cross_with_upper = self.ma_cross(fast_ma, slow_upper)
             cross_with_lower = self.ma_cross(fast_ma, slow_lower)
             cross_with_slow = self.ma_cross(fast_ma, slow_ma)
 
-            if cross_with_upper == 'gold' and long_amount < 10:
+            if cross_with_upper == 'gold' and coin_available < self.least_amount:
                 self.logger.info('golden cross with upper bond')
                 amount = self.get_amount()
-                self.future.open_long(self.coin, self.contract_type, last, amount, self.leverage, self.bbo)
-                self.logger.info('open long at: %f, amount: %d' % (last, amount))
+                self.buy(self.symbol, last, amount, self.bbo)
+                self.logger.info('buy at: %f, amount: %d' % (last, amount))
 
-            if cross_with_slow == 'dead' and long_amount > 0:
+            if cross_with_slow == 'dead' and coin_available > self.least_amount:
                 self.logger.info('dead cross with slow ma')
-                self.future.close_long(self.coin, self.contract_type, last, long_amount, self.leverage, self.bbo)
-                self.logger.info('close long at: %f, amount: %d' % (last, amount))
-
-            if cross_with_lower == 'dead' and short_amount < 10:
-                self.logger.info('dead cross with lower bond')
-                amount = self.get_amount()
-                self.future.open_short(self.coin, self.contract_type, last, amount, self.leverage, self.bbo)
-                self.logger.info('open short at: %f, amount: %d' % (last, amount))
-
-            if cross_with_slow == 'gold' and short_amount > 0:
-                self.logger.info('gold cross with slow ma')
-                self.future.close_short(self.coin, self.contract_type, last, short_amount, self.leverage, self.bbo)
-                self.logger.info('close short at: %f, amount: %d' % (last, short_amount))
+                self.sell(self.symbol, last, coin_available, self.bbo)
+                self.logger.info('sell at: %f, amount: %d' % (last, coin_available))
 
             time.sleep(self.interval)
 
@@ -136,8 +105,7 @@ if __name__ == '__main__':
     secret_key = config['secret_key']
     url = config['url']
 
-    coin = config['coin']
-    contract_type = config['contract_type']
+    symbol = config['symbol']
     kline_size = config['kline_size']
     kline_num = config['kline_num']
     amount_ratio = config['amount_ratio']
@@ -149,14 +117,14 @@ if __name__ == '__main__':
     leverage = config['leverage']
     stop_loss = config['stop_loss']
     band_width = config['band_width']
+    least_amount = config['least_amount']
 
     logger = get_logger()
 
     ma_bot = Ma(api_key,
             secret_key,
             url,
-            coin,
-            contract_type,
+            symbol,
             kline_size,
             kline_num,
             amount_ratio,
@@ -167,6 +135,7 @@ if __name__ == '__main__':
             interval,
             stop_loss,
             band_width,
+            least_amount,
             logger = logger)
 
     ma_bot.run_forever()
