@@ -92,7 +92,7 @@ class Ma(Base):
         if current_profit > 100:
             return current_profit * 0.7
         elif current_profit > 40:
-            return 20
+            return current_profit * 0.5
         elif current_profit > 20:
             return 0
         else:

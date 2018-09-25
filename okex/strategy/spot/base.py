@@ -26,7 +26,7 @@ class Base:
         userinfo = self.spot.userinfo()
         coin_avail = userinfo['info']['funds']['free'][coin]
 
-        return coin_avail
+        return float(coin_avail)
 
     def get_order_info(self, symbol, order_id):
         ret = self.spot.order_info(symbol, order_id)

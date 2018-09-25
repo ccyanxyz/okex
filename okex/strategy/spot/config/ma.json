@@ -11,5 +11,5 @@
     "fast":5,
     "interval":5,
     "band_width":0.05,
-	"least_amount":1
+	"least_amount":0.01
 }
