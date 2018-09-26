@@ -137,22 +137,33 @@ class Spot:
     def buy(self, symbol, price, amount, bbo = 0):
         trade_type = 'buy'
         if bbo == 1:
+            # 市价买单传price作为买入金额
             trade_type = 'buy_market'
-        ret = self.trade(symbol, trade_type, price, amount)
+            ret = self.trade(symbol, trade_type, price = amount, amount = None)
+        elif bbo == 0:
+            trade_type = 'buy'
+            ret = self.trade(symbol, trade_type, price = price, amount = None)
+
         if ret['result'] == True:
             return ret['order_id']
         else:
             self.logger.error('buy order failed.')
+            self.logger.error(str(ret))
             return ''
 
     def sell(self, symbol, price, amount, bbo = 0):
         trade_type = 'sell'
         if bbo == 1:
+            # 市价卖单不传price
             trade_type = 'sell_market'
-        ret = self.trade(symbol, trade_type, price, amount)
+            ret = self.trade(symbol, trade_type, price = None, amount = amount)
+        elif bbo == 0:
+            trade_type = 'sell'
+            ret = self.trade(symbol, trade_type, price = price, amount = None)
+
         if ret['result'] == True:
             return ret['order_id']
         else:
             self.logger.error('sell order failed.')
-            print(ret)
+            self.logger.error(str(ret))
             return ''
