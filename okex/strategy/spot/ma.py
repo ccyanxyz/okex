@@ -72,24 +72,26 @@ class Ma(Base):
             slow_ma = tb.SMA(close, int(self.slow))
             slow_upper = slow_ma + self.band_width
             slow_lower = slow_ma - self.band_width
+            self.logger.info('fast_ma:' + str(fast_ma[-1]) + ', slow_ma:' + str(slow_ma[-1]))
 
-            last = kline[-1][4]
+            last = float(kline[-1][4])
             self.logger.info('last: ' + str(last))
 
             cross_with_upper = self.ma_cross(fast_ma, slow_upper)
-            cross_with_lower = self.ma_cross(fast_ma, slow_lower)
             cross_with_slow = self.ma_cross(fast_ma, slow_ma)
+            self.logger.info('cross_with_upper:' + cross_with_upper + ', cross_with_slow:' + cross_with_slow)
+
 
             if cross_with_upper == 'gold' and coin_available < self.least_amount:
                 self.logger.info('golden cross with upper bond')
                 amount = self.get_amount()
-                self.buy(self.symbol, last, amount, self.bbo)
-                self.logger.info('buy at: %f, amount: %d' % (last, amount))
+                self.spot.buy(self.symbol, last, amount, self.bbo)
+                self.logger.info('buy at: %f, amount: %f' % (last, amount))
 
             if cross_with_slow == 'dead' and coin_available > self.least_amount:
                 self.logger.info('dead cross with slow ma')
-                self.sell(self.symbol, last, coin_available, self.bbo)
-                self.logger.info('sell at: %f, amount: %d' % (last, coin_available))
+                self.spot.sell(self.symbol, last, coin_available, self.bbo)
+                self.logger.info('sell at: %f, amount: %f' % (last, coin_available))
 
             time.sleep(self.interval)
 

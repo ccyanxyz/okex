@@ -154,4 +154,5 @@ class Spot:
             return ret['order_id']
         else:
             self.logger.error('sell order failed.')
+            print(ret)
             return ''

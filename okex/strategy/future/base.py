@@ -27,8 +27,14 @@ class Base:
         return long_amount, long_profit, short_amount, short_profit
 
     def get_available(self, symbol):
-        coin_avail = self.future.future_userinfo_4fix()['info'][symbol[:3]]['contracts'][0]['available']
-        return coin_avail
+        ret = self.future.future_userinfo_4fix()['info'][symbol[:3]]
+        # print(ret)
+        avail = 0
+        for item in ret['contracts']:
+            if item['contract_type'] == 'quarter':
+                avail = item['available']
+        # print(self.future.future_userinfo_4fix()['info'][symbol[:3]])
+        return avail
 
     def clear_pending_orders(self, symbol, contract_type):
         order_id = -1 # get orders with specific status

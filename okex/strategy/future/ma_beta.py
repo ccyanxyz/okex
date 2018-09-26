@@ -94,13 +94,16 @@ class Ma(Base):
                 return current_profit * 0.7
             else:
                 return stop_loss
-        elif current_profit > 40:
+        elif current_profit >= 40:
             if current_profit * 0.5 > stop_loss:
                 return current_profit * 0.5
             else:
                 return stop_loss
-        elif current_profit > 20:
-            return 0
+        elif current_profit >= 20 and current_profit < 40:
+            if stop_loss > 0:
+                return stop_loss
+            else:
+                return 7
         else:
             return stop_loss
 
