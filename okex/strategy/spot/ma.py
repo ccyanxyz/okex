@@ -59,8 +59,8 @@ class Ma(Base):
     def run_forever(self):
 
         while True:
-            usdt_available = self.get_available('usdt')
-            coin_available = self.get_available(self.coin)
+            usdt_available = round(self.get_available('usdt'), 2)
+            coin_available = round(self.get_available(self.coin), 3)
 
             self.logger.info('position: usdt = %s, %s = %s' % (usdt_available, self.coin, coin_available))
 
@@ -84,7 +84,7 @@ class Ma(Base):
 
             if cross_with_upper == 'gold' and coin_available < self.least_amount:
                 self.logger.info('golden cross with upper bond')
-                amount = self.get_amount()
+                amount = usdt_available
                 self.spot.buy(self.symbol, last, amount, self.bbo)
                 self.logger.info('buy at: %f, amount: %f' % (last, amount))
 
