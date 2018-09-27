@@ -144,6 +144,7 @@ class Spot:
             trade_type = 'buy'
             ret = self.trade(symbol, trade_type, price = price, amount = None)
 
+        self.logger.info(str(ret))
         if ret['result'] == True:
             return ret['order_id']
         else:

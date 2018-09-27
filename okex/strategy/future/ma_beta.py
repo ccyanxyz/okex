@@ -163,7 +163,7 @@ class Ma(Base):
             if cross_with_slow == 'dead' and long_amount > 0:
                 self.logger.info('dead cross with slow ma')
                 self.future.close_long(self.coin, self.contract_type, last, long_amount, self.leverage, self.bbo)
-                self.logger.info('close long at: %f, amount: %d' % (last, amount))
+                self.logger.info('close long at: %f, amount: %d' % (last, long_amount))
 
             if cross_with_lower == 'dead' and short_amount < 10:
                 self.logger.info('dead cross with lower bond')

@@ -85,6 +85,8 @@ class Ma(Base):
             if cross_with_upper == 'gold' and coin_available < self.least_amount:
                 self.logger.info('golden cross with upper bond')
                 amount = usdt_available
+                if amount < 1:
+                    continue
                 self.spot.buy(self.symbol, last, amount, self.bbo)
                 self.logger.info('buy at: %f, amount: %f' % (last, amount))
 
