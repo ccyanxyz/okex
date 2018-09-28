@@ -60,7 +60,7 @@ class Ma(Base):
 
         while True:
             usdt_available = round(self.get_available('usdt'), 2) - 0.05
-            coin_available = round(self.get_available(self.coin), 3)
+            coin_available = round(self.get_available(self.coin) - 0.001, 3)
 
             self.logger.info('position: usdt = %s, %s = %s' % (usdt_available, self.coin, coin_available))
 
