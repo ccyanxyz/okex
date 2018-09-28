@@ -51,10 +51,10 @@ class Ma(Base):
         return int(amount_ratio * total - 1)
 
     def ma_cross(self, fast_ma, slow_ma):
-        # unstable version
-        if fast_ma[-2] < slow_ma[-2] and fast_ma[-1] >= slow_ma[-1]:
+        # stable version
+        if fast_ma[-3] < slow_ma[-3] and fast_ma[-2] >= slow_ma[-2]:
             return 'gold'
-        elif fast_ma[-2] > slow_ma[-2] and fast_ma[-1] <= slow_ma[-1]:
+        elif fast_ma[-3] > slow_ma[-3] and fast_ma[-2] <= slow_ma[-2]:
             return 'dead'
         else:
             return 'nothing'

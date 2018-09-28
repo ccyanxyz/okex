@@ -144,11 +144,14 @@ class Spot:
             trade_type = 'buy'
             ret = self.trade(symbol, trade_type, price = price, amount = None)
 
-        self.logger.info(str(ret))
-        if ret['result'] == True:
-            return ret['order_id']
-        else:
-            self.logger.error('buy order failed.')
+        try:
+            if ret['result'] == True:
+                return ret['order_id']
+            else:
+                self.logger.error('buy order failed.')
+                self.logger.error(str(ret))
+                return ''
+        except:
             self.logger.error(str(ret))
             return ''
 
@@ -162,9 +165,13 @@ class Spot:
             trade_type = 'sell'
             ret = self.trade(symbol, trade_type, price = price, amount = None)
 
-        if ret['result'] == True:
-            return ret['order_id']
-        else:
-            self.logger.error('sell order failed.')
+        try:
+            if ret['result'] == True:
+                return ret['order_id']
+            else:
+                self.logger.error('sell order failed.')
+                self.logger.error(str(ret))
+                return ''
+        except:
             self.logger.error(str(ret))
             return ''
