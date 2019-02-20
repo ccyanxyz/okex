@@ -1,6 +1,6 @@
 {
-    "api_key":"6d1f9dc9-95f2-4595-a9c0-20bd344a5154",
-    "secret_key":"C275C775AA323969F1CB936216735126",
+    "api_key":"xxx",
+    "secret_key":"xxx",
     "url":"www.okb.com",
     "coin":"eth_usdt",
     "contract_type":"quarter",
