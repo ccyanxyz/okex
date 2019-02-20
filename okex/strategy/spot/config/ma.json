@@ -1,6 +1,6 @@
 {
-    "api_key":"aa242487-56e8-4b3b-ab45-4d076b1cd8bd",
-    "secret_key":"0366776FA8C5AB0560B2216033467073",
+    "api_key":"xxx",
+    "secret_key":"xxx",
     "url":"www.okb.com",
     "symbol":"eth_usdt",
     "kline_size":"15min",
