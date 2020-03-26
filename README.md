@@ -6,5 +6,5 @@
 *   Some simple trading strategies
 
 # WARNING
-  This is just a toy, DO NOT use it under any circumstances!!!
+  This is just a toy, USE IT AT YOUR OWN RISK!
 
